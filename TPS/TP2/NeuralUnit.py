@@ -1,5 +1,5 @@
 import numpy as np
-
+from utils import *
 class NeuralUnit:
     
     def __init__(self,k,u):
@@ -23,4 +23,13 @@ class NeuralUnit:
         self.nfo += 1
         aUnit.preceding.append(self)
         aUnit.npr += 1
+        
+    def forward(self,i):
+        z = 0
+        for k,prevNU in enumerate(self.preceding):
+            z += self.w[k]*prevNU.forward(i)
+        z += self.b
+        z = sgm(z)
+        self.z = z
+        return z
         

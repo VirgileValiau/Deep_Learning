@@ -20,7 +20,6 @@ class MLP:
                     Nu = InputUnit(X[:,j])
                 else :
                     Nu = NeuralUnit(i,j)
-                    Nu.reset_params()
                 layer.append(Nu)  
             net.append(layer) 
         net.append([Loss(y,len(archi))])
@@ -31,3 +30,8 @@ class MLP:
             for n in range(len(net[l])):
                 for next_neuron in net[l+1]:
                     net[l][n].plug(next_neuron)   
+                    if l!=0 and l != len(net)-1:
+                        net[l][n].reset_params()
+
+    def forward(self,i):
+        return self.net[-1][-1].forward(i)
