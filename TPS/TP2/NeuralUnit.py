@@ -33,3 +33,11 @@ class NeuralUnit:
         self.z = z
         return z
         
+    def backprop(self,i,delta):
+        self.delta = np.zeros(self.w.shape)
+        self.w_grad = np.zeros(self.w.shape)
+        self.b_grad = 0
+        for v in range(len(self.preceding)):
+            self.delta[v] = delta[self.u]*self.z*(1-self.z)*self.w[v]
+            self.w_grad[v] = self.z*(1-self.z)*self.preceding[v].z*delta[self.u]
+        self.b_grad = self.z*(1-self.z)*delta[self.u]

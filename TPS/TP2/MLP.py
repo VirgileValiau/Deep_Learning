@@ -35,3 +35,33 @@ class MLP:
 
     def forward(self,i):
         return self.net[-1][-1].forward(i)
+    
+    def backprop(self,i):
+        for k in range(self.K,0,-1):
+            if k == self.K:
+                self.net[k][0].backprop(i)
+                deltas = self.net[k][0].delta
+            else:
+                deltas_new = np.zeros((self.net[k][0].npr,))
+                for u in range(len(self.net[k])):
+                    self.net[k][u].backprop(i,deltas)
+                    deltas_new += self.net[k][u].delta
+                deltas = deltas_new
+                
+                
+    def update(self,eta):
+        for l in range(1,len(self.net)-1):
+            for u in self.net[l]:
+                u.w -= eta*u.w_grad
+                u.b -= eta*u.b_grad
+                
+    def train(self,epochs,eta):
+        for epoch in range(epochs):
+            print("epoch ",epoch+1,"/",epochs,'...')
+            for i in range(self.n):
+                self.forward(i)
+                self.backprop(i)
+                self.update(eta)
+                
+    def predict(self,i):
+        return self.net[-2][0].forward(i)
