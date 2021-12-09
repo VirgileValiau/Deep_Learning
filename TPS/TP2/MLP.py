@@ -57,11 +57,13 @@ class MLP:
                 
     def train(self,epochs,eta):
         for epoch in range(epochs):
-            print("epoch ",epoch+1,"/",epochs,'...')
+            if epoch % 10 == 0:
+                print("epoch ",epoch,"/",epochs,'...')
             for i in range(self.n):
                 self.forward(i)
                 self.backprop(i)
                 self.update(eta)
+        print("epoch",epochs,"/",epochs,"...")
                 
     def predict(self,i):
         return self.net[-2][0].forward(i)
