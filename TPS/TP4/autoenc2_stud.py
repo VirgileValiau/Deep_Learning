@@ -41,6 +41,8 @@ lr_schedule = tf.keras.optimizers.schedules.ExponentialDecay(
     decay_steps=500,
     decay_rate=0.96)
 
+activation = tf.nn.elu
+
 #%% Dataset formatting
  
 x_train = x_train.reshape((x_train.shape[0],x_train.shape[1]*x_train.shape[2]))/255 - 0.5
@@ -59,18 +61,18 @@ class AE(tf.Module):
         self.b = []
         self.K = len(unit_nbrs)-1
         for i in range(self.K):            
-            self.w.append( ... )
-            self.b.append( ... )
+            self.w.append(tf.Variable(tf.random.normal([unit_nbrs[i],unit_nbrs[i+1]]), name='w'+str(i+1)))
+            self.b.append(tf.Variable(tf.zeros([unit_nbrs[i+1]]), name='b'+str(i+1)))
         for i in range(self.K):            
-            self.b.append( ... )  
+            self.b.append(tf.Variable(tf.zeros([unit_nbrs[self.K-i-1]]), name='b'+str(self.K+i+1)))  
         
     @tf.function
     def __call__(self, x):
         z = [x]
         for i in range(self.K):  
-            z.append(...)
+            z.append(activation(tf.matmul(z[-1],self.w[i]) + self.b[i]))
         for i in range(self.K):  
-            z.append(...)
+            z.append(activation(tf.matmul(z[-1],tf.transpose(self.w[self.K-i-1])) + self.b[i+self.K]))
         return z[-1]
     
 def loss(target,pred):
@@ -80,7 +82,7 @@ def reg(model,l2_reg):
     term = 0
     for coef in model.trainable_variables:
         if (coef.name[0]=='w'):
-            term += ...
+            term += np.linalg.norm(coef)
     return l2_reg*term
     
 
@@ -99,8 +101,8 @@ if __name__ == '__main__':
         for step in range(steps):
             # Computing the function meanwhile recording a gradient tape
             with tf.GradientTape() as tape: 
-                ...
-                train_loss = ...
+                x = [x_train[np.random.choice(len(x_train))] for i in range(batch_size)]
+                train_loss = loss(x,my_AE(x)) + reg(my_AE,l2_reg)
 
             grads = tape.gradient(train_loss,my_AE.trainable_variables)
             optimizer.apply_gradients(zip(grads, my_AE.trainable_variables))
@@ -109,13 +111,15 @@ if __name__ == '__main__':
 #%%
 # Call it, with random results
 
-    ind = 1000
-    print("Inputs:", x_train[ind:ind+1][0,:5])
-    print("Model results:", my_AE(x_train[ind:ind+1])[0,:5])
-    x_tilde = my_AE(x_train[ind:ind+1]).numpy()
-    
-    plt.imshow(np.reshape(x_tilde,(28,28)), cmap='gray', interpolation="nearest")
+ind = 1000
+print("Inputs:", x_train[ind:ind+1][0,:5])
+print("Model results:", my_AE(x_train[ind:ind+1])[0,:5])
+x_tilde = my_AE(x_train[ind:ind+1]).numpy()
 
-    x_tilde_test = my_AE(x_test)
-    test_loss = loss(x_test,x_tilde_test)
-    print("Test MSE =",test_loss)
+plt.imshow(np.reshape(x_train[ind],(28,28)), cmap='gray', interpolation="nearest")
+plt.imshow(np.reshape(x_tilde,(28,28)), cmap='gray', interpolation="nearest")
+
+x_tilde_test = my_AE(x_test)
+test_loss = loss(x_test,x_tilde_test)
+print("Test MSE =",test_loss)
+# %%
