@@ -69,9 +69,11 @@ class AE(tf.Module):
     @tf.function
     def __call__(self, x):
         z = [x]
-        for i in range(self.K):  
+        for i in range(self.K): 
+            #print(self.w[i].name,self.b[i].name) 
             z.append(activation(tf.matmul(z[-1],self.w[i]) + self.b[i]))
         for i in range(self.K):  
+            #print(self.w[self.K-i-1].name,self.b[i+self.K].name) 
             z.append(activation(tf.matmul(z[-1],tf.transpose(self.w[self.K-i-1])) + self.b[i+self.K]))
         return z[-1]
     
@@ -80,9 +82,9 @@ def loss(target,pred):
 
 def reg(model,l2_reg):
     term = 0
-    for coef in model.trainable_variables:
+    for coef in model.trainable_variables[-model.K:]:
         if (coef.name[0]=='w'):
-            term += np.linalg.norm(coef)
+            term += np.linalg.norm(coef.numpy())
     return l2_reg*term
     
 
@@ -92,7 +94,6 @@ if __name__ == '__main__':
     print("Model results:", my_AE(x_train[0:2]))
     optimizer = tf.keras.optimizers.Adam(learning_rate=lr_schedule)
 
-
 #%% Training - loss of 0.05 after 4 epochs
 
     n_epochs = 4
@@ -101,7 +102,8 @@ if __name__ == '__main__':
         for step in range(steps):
             # Computing the function meanwhile recording a gradient tape
             with tf.GradientTape() as tape: 
-                x = [x_train[np.random.choice(len(x_train))] for i in range(batch_size)]
+                idx=np.random.choice(n, batch_size, replace=False)
+                x=x_train[idx]
                 train_loss = loss(x,my_AE(x)) + reg(my_AE,l2_reg)
 
             grads = tape.gradient(train_loss,my_AE.trainable_variables)
@@ -111,15 +113,25 @@ if __name__ == '__main__':
 #%%
 # Call it, with random results
 
-ind = 1000
-print("Inputs:", x_train[ind:ind+1][0,:5])
-print("Model results:", my_AE(x_train[ind:ind+1])[0,:5])
+ind = 90
+print("Inputs:", x_train[ind:ind+1][0,28*14:28*14+20])
+print("Model results:", my_AE(x_train[ind:ind+1])[0,28*14:28*14+20])
 x_tilde = my_AE(x_train[ind:ind+1]).numpy()
 
 plt.imshow(np.reshape(x_train[ind],(28,28)), cmap='gray', interpolation="nearest")
+plt.show()
 plt.imshow(np.reshape(x_tilde,(28,28)), cmap='gray', interpolation="nearest")
+plt.show()
 
 x_tilde_test = my_AE(x_test)
 test_loss = loss(x_test,x_tilde_test)
 print("Test MSE =",test_loss)
+
+
+# %%
+
+# %%
+
+# %%
+
 # %%
