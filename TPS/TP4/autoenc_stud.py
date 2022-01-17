@@ -132,3 +132,5 @@ plt.title('Dim. Red with PCA')
 print(' Les résultats sont relativement proches, mais en essayant plusieurs fois,on se rend compte que la PCA est un peu plus régulière ')
 
 # %%
+
+# %%
